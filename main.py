@@ -31,7 +31,7 @@ def main():
     valdir = os.path.join('..', 'data', args.data, 'val')
 
     if args.data == 'nyudepthv2':
-        from dataloaders.nyu import NYUDataset
+        from dataloaders.kitti import NYUDataset
         val_dataset = NYUDataset(valdir, split='val', modality=args.modality)
     else:
         raise RuntimeError('Dataset not found.')
