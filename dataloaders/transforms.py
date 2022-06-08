@@ -8,7 +8,7 @@ try:
     import accimage
 except ImportError:
     accimage = None
-
+import cv2
 import numpy as np
 import numbers
 import types
@@ -309,7 +309,7 @@ class Rotate(object):
 
 
 class Resize(object):
-    """Resize the the given ``numpy.ndarray`` to the given size.
+    """Resize the given ``numpy.ndarray`` to the given size.
     Args:
         size (sequence or int): Desired output size. If size is a sequence like
             (h, w), output size will be matched to this. If size is an int,
@@ -333,12 +333,11 @@ class Resize(object):
         Returns:
             PIL Image: Rescaled image.
         """
-        if img.ndim == 3:
-            return misc.imresize(img, self.size, self.interpolation)
-        elif img.ndim == 2:
-            return misc.imresize(img, self.size, self.interpolation, 'F')
+        if isinstance(self.size, float):
+            return cv2.resize(img, (int(self.size * img.shape[1]), int(self.size * img.shape[0])), cv2.INTER_NEAREST)
         else:
-            RuntimeError('img should be ndarray with 2 or 3 dimensions. Got {}'.format(img.ndim))
+            return cv2.resize(img, (self.size[1], self.size[0]), cv2.INTER_NEAREST)
+
 
 
 class CenterCrop(object):

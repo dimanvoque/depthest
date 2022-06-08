@@ -20,13 +20,13 @@ class KITTIDataset(MyDataloader):
             transforms.Crop(130, 10, 240, 1200),
             transforms.Rotate(angle),
             transforms.Resize(s),
-            transforms.CenterCrop(228, 912),
-            transforms.HorizontalFlip(do_flip),
-            transforms.Resize(self.output_size),
+            transforms.CenterCrop(self.output_size),
+            transforms.HorizontalFlip(do_flip)
         ])
         rgb_np = transform(rgb)
         rgb_np = self.color_jitter(rgb_np)    # random color jittering
         rgb_np = np.asfarray(rgb_np, dtype='float') / 255
+        depth_np = np.asfarray(depth_np, dtype='float32')
         depth_np = transform(depth_np)
 
         return rgb_np, depth_np
@@ -35,7 +35,7 @@ class KITTIDataset(MyDataloader):
         depth_np = depth
         transform = transforms.Compose([
             transforms.Crop(130, 10, 240, 1200),
-            transforms.CenterCrop(self.output_size),
+            transforms.CenterCrop(self.output_size)
         ])
 
         rgb_np = transform(rgb)

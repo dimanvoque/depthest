@@ -4,38 +4,38 @@ import shutil
 import numpy as np
 import matplotlib.pyplot as plt
 from PIL import Image
-import config
-import math
-from model import Decoder
-import argparse
+import config as config
+from models import Decoder
 from dataloaders.dataloader import MyDataloader
-import config
+import argparse
 
 cmap = plt.cm.viridis
 
 
 def parse_command():
     data_names = ['kitti']
-    model_names = ['MobileNetV3', 'MobileNetV3SkipAdd', 'MobileNetV3SkipConcat']
+    model_names = ['MobileNetV3', 'MobileNetV3SkipAdd', 'MobileNetV3SkipAddS', 'MobileNetV3SkipConcat']
     loss_names = ['l1', 'l2']
     decoder_names = Decoder.names
     modality_names = MyDataloader.modality_names
 
     parser = argparse.ArgumentParser(description='FastDepth')
 
-    parser.add_argument('--arch', '-a', metavar='ARCH', default='MobileNetV3SkipAdd', choices=model_names,
-                        help='model architecture: ' + ' | '.join(model_names) + ' (default: MobilenetV3)')
+    parser.add_argument('--arch', '-a', metavar='ARCH', default='', choices=model_names,
+                        help='model architecture: ' + ' | '.join(model_names) + ' (default: MobilenetV3SkipAdd)')
     parser.add_argument('--data', metavar='DATA', default='kitti',
                         choices=data_names,
-                        help='dataset: ' + ' | '.join(data_names) + ' (default: nyudepthv2)')
+                        help='dataset: ' + ' | '.join(data_names) + ' (default: kitti)')
+    parser.add_argument('-s', '--num-samples', default=0, type=int, metavar='N',
+                        help='number of sparse depth samples (default: 0)')
     parser.add_argument('--modality', '-m', metavar='MODALITY', default='rgb', choices=modality_names,
                         help='modality: ' + ' | '.join(modality_names) + ' (default: rgb)')
     parser.add_argument('--max-depth', default=-1.0, type=float, metavar='D',
                         help='cut-off depth of sparsifier, negative values means infinity (default: inf [m])')
     parser.add_argument('--decoder', '-d', metavar='DECODER', default='nnconv', choices=decoder_names,
                         help='decoder: ' + ' | '.join(decoder_names) + ' (default: nnconv)')
-    parser.add_argument('-j', '--workers', default=16, type=int, metavar='N',
-                        help='number of data loading workers (default: 16)')
+    parser.add_argument('-j', '--workers', default=2, type=int, metavar='N',
+                        help='number of data loading workers (default: 2)')
     parser.add_argument('--epochs', default=15, type=int, metavar='N',
                         help='number of total epochs to run (default: 15)')
     parser.add_argument('-c', '--criterion', metavar='LOSS', default='l1', choices=loss_names,
@@ -49,14 +49,16 @@ def parse_command():
                         metavar='W', help='weight decay (default: 1e-4)')
     parser.add_argument('--print-freq', '-p', default=10, type=int,
                         metavar='N', help='print frequency (default: 50)')
-    parser.add_argument('--resume', default='', type=str, metavar='PATH',
-                        help='path to latest checkpoint (default: none)')
-    parser.add_argument('-e', '--evaluate', default='', type=str, metavar='PATH',)
+    parser.add_argument('--resume', default='',
+                        type=str, metavar='PATH',
+                        help='path to latest checkpoint (default: results/kitti.samples=0.modality=rgb.arch=MobileNetV3SkipAdd.decoder=nnconv.criterion=l1.lr=0.01.bs=8.pretrained=True/ch.peckpoint-4.pth.tar)')
+    parser.add_argument('-e', '--evaluate', dest = 'evaluate', type = str, default='')
+    parser.add_argument('-t', '--train', default='', type=str)
     parser.add_argument('-pt', '--no-pretrain', dest='pretrained', action='store_false',
                         help='not to use ImageNet pre-trained weights')
 
     parser.set_defaults(pretrained=True)
-    if configuration_file.GPU == True:
+    if config.GPU == True:
         parser.set_defaults(cuda=True)
     args = parser.parse_args()
 
@@ -134,7 +136,7 @@ def adjust_learning_rate(optimizer, epoch, lr_init):
         param_group['lr'] = lr
 
 def get_output_directory(args):
-    print("Inside outout directory method")
+    print("Inside output directory method")
     output_directory = os.path.join('results',
         '{}.samples={}.modality={}.arch={}.decoder={}.criterion={}.lr={}.bs={}.pretrained={}'.
         format(args.data,  args.num_samples, args.modality, \
@@ -152,5 +154,3 @@ def get_depth_map(input, depth_target, depth_pred):
     depth_target_col = colored_depthmap(depth_target_cpu, d_min, d_max)
     depth_pred_col = colored_depthmap(depth_pred_cpu, d_min, d_max)
     return depth_target_col,depth_pred_col
-
-
