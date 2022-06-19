@@ -14,7 +14,7 @@ cmap = plt.cm.viridis
 
 def parse_command():
     data_names = ['kitti']
-    model_names = ['MobileNetV3', 'MobileNetV3SkipAdd', 'MobileNetV3SkipAddS', 'MobileNetV3SkipConcat']
+    model_names = ['MobileNetV3SkipAddL_NNConv5R', 'MobileNetV3SkipAddL_NNConv5S', 'MobileNetV3L_NNConv5GU', 'MobileNetV3SkipAddS_NNConv5R', 'MobileNetV3S_NNConv5GU']
     loss_names = ['l1', 'l2']
     decoder_names = Decoder.names
     modality_names = MyDataloader.modality_names
@@ -22,7 +22,7 @@ def parse_command():
     parser = argparse.ArgumentParser(description='FastDepth')
 
     parser.add_argument('--arch', '-a', metavar='ARCH', default='', choices=model_names,
-                        help='model architecture: ' + ' | '.join(model_names) + ' (default: MobilenetV3SkipAdd)')
+                        help='model architecture: ' + ' | '.join(model_names) + ' (default: MobileNetV3SkipAddS_NNConv5R)')
     parser.add_argument('--data', metavar='DATA', default='kitti',
                         choices=data_names,
                         help='dataset: ' + ' | '.join(data_names) + ' (default: kitti)')

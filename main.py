@@ -136,14 +136,16 @@ def main():
         train_loader, val_loader = create_data_loaders(args) # load train and validation data
         print("=> creating Model ({}-{}) ...".format(args.arch, args.decoder))
         in_channels = len(args.modality)
-        if args.arch == 'MobileNetV3SkipAdd': # if we use skip-add connections
-            model = models.MobileNetV3SkipAdd(output_size=train_loader.dataset.output_size) # MobileNetV3SkipAdd model is created
-        elif args.arch == 'MobileNetV3SkipConcat': # if we use skip-concat connections
-            model = models.MobileNetV3SkipConcat(output_size=train_loader.dataset.output_size) # MobileNetV3SkipConcat model is created
-        elif args.arch == 'MobileNetV3': # if we don't use skip connections
-            model = models.MobileNetV3(output_size=train_loader.dataset.output_size) # MobileNetV3 model is create
+        if args.arch == 'MobileNetV3SkipAddL_NNConv5R': # if we use skip-add connections
+            model = models.MobileNetV3SkipAddL_NNConv5R(output_size=train_loader.dataset.output_size) # MobileNetV3SkipAddL_NNConv5R model is created
+        elif args.arch == 'MobileNetV3SkipAddL_NNConv5S': # if we use skip-concat connections
+            model = models.MobileNetV3SkipAddL_NNConv5S(output_size=train_loader.dataset.output_size) # MobileNetV3SkipAddL_NNConv5S model is created
+        elif args.arch == 'MobileNetV3L_NNConv5GU': # if we don't use skip connections
+            model = models.MobileNetV3L_NNConv5GU(output_size=train_loader.dataset.output_size) # MobileNetV3L_NNConv5GU model is created
+        elif args.arch == 'MobileNetV3S_NNConv5GU': # if we don't use skip connections
+            model = models.MobileNetV3S_NNConv5GU(output_size=train_loader.dataset.output_size) # MobileNetV3S_NNConv5GU model is created
         else:
-            model = models.MobileNetV3SkipAdd(output_size=train_loader.dataset.output_size)  # by default we use SkipAdd model
+            model = models.MobileNetV3SkipAddL_NNConv5R(output_size=train_loader.dataset.output_size)  # by default we use MobileNetV3SkipAddS_NNConv5R model
         print("=> model created.")
         optimizer = torch.optim.SGD(model.parameters(), args.lr, \
                                     momentum=args.momentum, weight_decay=args.weight_decay) # configure optimizer
@@ -319,15 +321,17 @@ def validate(val_loader, model, epoch, write_to_file=True):
     for i, (input, target) in enumerate(val_loader):
         if config.GPU == True:
             input, target = input.cuda(), target.cuda()
-        # torch.cuda.synchronize()
+        #torch.cuda.synchronize()
         data_time = time.time() - end
-
+        start = torch.cuda.Event(enable_timing=True)
+        end = torch.cuda.Event(enable_timing=True)
         # compute output
-        end = time.time()
+        start.record()
         with torch.no_grad():
             pred = model(input)
-        # torch.cuda.synchronize()
-        gpu_time = time.time() - end
+        end.record()
+        torch.cuda.synchronize()
+        gpu_time = start.elapsed_time(end)
 
         # measure accuracy and record loss
         result = Result()

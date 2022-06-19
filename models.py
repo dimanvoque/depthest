@@ -361,10 +361,10 @@ def choose_decoder(decoder):
     return model
 
 
-class MobileNetV3(nn.Module):
+class MobileNetV3L_NNConv5GU(nn.Module):
     def __init__(self, output_size, in_channels=3, pretrained=True):
 
-        super(MobileNetV3, self).__init__()
+        super(MobileNetV3L_NNConv5GU, self).__init__()
         self.output_size = output_size
         self.mobilenetv3 = imagenet.mobilenetv3_large()
         if pretrained:
@@ -435,10 +435,10 @@ class MobileNetV3(nn.Module):
         return x
 
 
-class MobileNetV3SkipAdd(nn.Module):
+class MobileNetV3SkipAddL_NNConv5R(nn.Module):
     def __init__(self, output_size, pretrained=True):
 
-        super(MobileNetV3SkipAdd, self).__init__()
+        super(MobileNetV3SkipAddL_NNConv5R, self).__init__()
         self.output_size = output_size
         self.mobilenetv3 = imagenet.mobilenetv3_large()
         if pretrained:
@@ -519,10 +519,10 @@ class MobileNetV3SkipAdd(nn.Module):
         x = self.decode_conv6(x)
         return x
 
-class MobileNetV3SkipConcat(nn.Module):
+class MobileNetV3SkipAddL_NNConv5S(nn.Module):
     def __init__(self, output_size, pretrained=True):
 
-        super(MobileNetV3SkipConcat, self).__init__()
+        super(MobileNetV3SkipAdd, self).__init__()
         self.output_size = output_size
         self.mobilenetv3 = imagenet.mobilenetv3_large()
         if pretrained:
@@ -534,15 +534,16 @@ class MobileNetV3SkipConcat(nn.Module):
         self.mobilenetv3 = nn.Sequential(*(childs[i] for i in range(2)))
         childs12 = torch.nn.Sequential(*childs[0], *childs[1])
 
-        for i in range(len(childs12)):
-            setattr(self, 'conv{}'.format(i), childs12[i])
+
+        for i in range (len(childs12)):
+            setattr( self, 'conv{}'.format(i), childs12[i])
 
         kernel_size = 5
         # self.decode_conv1 = conv(960, 80, kernel_size)
         # self.decode_conv2 = conv(80, 40, kernel_size)
         # self.decode_conv3 = conv(40, 24, kernel_size)
         # self.decode_conv4 = conv(24, 16, kernel_size)
-        # self.decode_conv5 = conv(16, 3, kernel_size)
+        # self.decode_conv5 = conv(16, 1, kernel_size)
         self.decode_conv1 = nn.Sequential(
             depthwise(960, kernel_size),
             pointwise(960, 80))
@@ -557,29 +558,29 @@ class MobileNetV3SkipConcat(nn.Module):
             pointwise(24, 16))
         self.decode_conv5 = nn.Sequential(
             depthwise(16, kernel_size),
-            pointwise(16, 3))
-        self.decode_conv6 = pointwise(3, 1)
+            pointwise(16, 1))
+        
         weights_init(self.decode_conv1)
         weights_init(self.decode_conv2)
         weights_init(self.decode_conv3)
         weights_init(self.decode_conv4)
         weights_init(self.decode_conv5)
-        weights_init(self.decode_conv6)
 
     def forward(self, x):
         # skip connections: dec4: enc1
-        # dec 3: enc2 or enc3
-        # dec 2: enc4 or enc6
+        # dec 3: enc3
+        # dec 2: enc6
 
         childs = list(self.mobilenetv3.children())
         self.mobilenetv3 = nn.Sequential(*(childs[i] for i in range(2)))
 
         childs12 = torch.nn.Sequential(*childs[0], *childs[1])
+        
 
         for i in range (len(childs12)):
             layer = getattr(self, 'conv{}'.format(i))
             x = layer(x)
-            # print("{}: {}".format(i, x.size()))
+            #print("{}: {}".format(i, x.size()))
             if i==1:
                 x1 = x
             elif i==3:
@@ -588,25 +589,23 @@ class MobileNetV3SkipConcat(nn.Module):
                 x3 = x
         for i in range(1,6):
             layer = getattr(self, 'decode_conv{}'.format(i))
-            # print("{}a: {}".format(i, x.size()))
             x = layer(x)
-            # print("{}b: {}".format(i, x.size()))
             x = F.interpolate(x, scale_factor=2, mode='nearest')
             if i==4:
-                x = torch.cat((x, x1), 1)
+                x = x + x1
             elif i==3:
-                x = torch.cat((x, x2), 1)
+                x = x + x2
             elif i==2:
-                x = torch.cat((x, x3), 1)
-            # print("{}c: {}".format(i, x.size()))
-        x = self.decode_conv6(x)
+                x = x + x3
+            #print("{}: {}".format(i, x.size()))
+        #x = self.decode_conv6(x)
         return x
 
 
-class MobileNetV3SkipAddS(nn.Module):
+class MobileNetV3SkipAddS_NNConv5R(nn.Module):
     def __init__(self, output_size, pretrained=True):
 
-        super(MobileNetV3SkipAddS, self).__init__()
+        super(MobileNetV3SkipAddS_NNConv5R, self).__init__()
         self.output_size = output_size
         self.mobilenetv3 = imagenet.mobilenetv3_large()
         if pretrained:
@@ -622,11 +621,11 @@ class MobileNetV3SkipAddS(nn.Module):
             setattr(self, 'conv{}'.format(i), childs12[i])
 
         kernel_size = 5
-        # self.decode_conv1 = conv(960, 80, kernel_size)
-        # self.decode_conv2 = conv(80, 40, kernel_size)
-        # self.decode_conv3 = conv(40, 24, kernel_size)
-        # self.decode_conv4 = conv(24, 16, kernel_size)
-        # self.decode_conv5 = conv(16, 3, kernel_size)
+        # self.decode_conv1 = conv(576, 40, kernel_size)
+        # self.decode_conv2 = conv(40, 24, kernel_size)
+        # self.decode_conv3 = conv(24, 16, kernel_size)
+        # self.decode_conv4 = conv(16, 3, kernel_size)
+        # self.decode_conv5 = conv(3, 1, kernel_size)
         self.decode_conv1 = nn.Sequential(
             depthwise(576, kernel_size),
             pointwise(576, 40))
@@ -639,9 +638,6 @@ class MobileNetV3SkipAddS(nn.Module):
         self.decode_conv4 = nn.Sequential(
             depthwise(16, kernel_size),
             pointwise(16, 3))
-        #self.decode_conv5 = nn.Sequential(
-         #   depthwise(16, kernel_size),
-          #  pointwise(16, 3))
         self.decode_conv5 = pointwise(3, 1)
 
         weights_init(self.decode_conv1)
@@ -649,12 +645,11 @@ class MobileNetV3SkipAddS(nn.Module):
         weights_init(self.decode_conv3)
         weights_init(self.decode_conv4)
         weights_init(self.decode_conv5)
-        #weights_init(self.decode_conv6)
 
     def forward(self, x):
         # skip connections: dec4: enc1
-        # dec 3: enc2 or enc3
-        # dec 2: enc4 or enc6
+        # dec 3: enc3
+        # dec 2: enc6
 
         childs = list(self.mobilenetv3.children())
         self.mobilenetv3 = nn.Sequential(*(childs[i] for i in range(2)))
@@ -683,4 +678,76 @@ class MobileNetV3SkipAddS(nn.Module):
                 x = x + x3
             # print("{}: {}".format(i, x.size()))
         x = self.decode_conv6(x)
+        return x
+
+class MobileNetV3S_NNConv5GU(nn.Module):
+    def __init__(self, output_size, in_channels=3, pretrained=True):
+
+        super(MobileNetV3S_NNConv5GU, self).__init__()
+        self.output_size = output_size
+        self.mobilenetv3 = imagenet.mobilenetv3_large()
+        if pretrained:
+            self.mobilenetv3.load_state_dict(torch.load('imagenet/pretrained/mobilenetv3-small-55df8e1f.pth'))
+        else:
+            self.mobilenetv3.apply(weights_init)
+
+        childs = list(self.mobilenetv3.children())
+
+        if in_channels == 3:
+            self.mobilenetv3 = nn.Sequential(*(childs[i] for i in range(2)))
+        else:
+            def conv_bn(inp, oup, stride):
+                return nn.Sequential(
+                    nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
+                    nn.BatchNorm2d(oup),
+                    nn.ReLU6(inplace=True)
+                )
+
+            self.mobilenetv3 = nn.Sequential(
+                conv_bn(in_channels,  32, 2),
+                *(childs[i] for i in range(2)))
+        
+        kernel_size = 5
+        # self.decode_conv1 = conv(576, 288, kernel_size)
+        # self.decode_conv2 = conv(288, 144, kernel_size)
+        # self.decode_conv3 = conv(144, 72, kernel_size)
+        # self.decode_conv4 = conv(72, 36, kernel_size)
+        # self.decode_conv5 = conv(36, 1, kernel_size)
+
+        self.decode_conv1 = nn.Sequential(
+            depthwise(576, kernel_size),
+            pointwise(576, 288))
+        self.decode_conv2 = nn.Sequential(
+            depthwise(288, kernel_size),
+            pointwise(288, 144))
+        self.decode_conv3 = nn.Sequential(
+            depthwise(144, kernel_size),
+            pointwise(144, 72))
+        self.decode_conv4 = nn.Sequential(
+            depthwise(72, kernel_size),
+            pointwise(72, 36))
+        self.decode_conv5 = nn.Sequential(
+            depthwise(36, kernel_size),
+            pointwise(36, 1))
+
+        weights_init(self.decode_conv1)
+        weights_init(self.decode_conv2)
+        weights_init(self.decode_conv3)
+        weights_init(self.decode_conv4)
+        weights_init(self.decode_conv5)
+
+    def forward(self, x):
+        x = self.mobilenetv3(x)
+        x = self.decode_conv1(x)
+        x = F.interpolate(x, scale_factor=2, mode='nearest')
+        x = self.decode_conv2(x)
+        x = F.interpolate(x, scale_factor=2, mode='nearest')
+        x = self.decode_conv3(x)
+        x = F.interpolate(x, scale_factor=2, mode='nearest')
+        x = self.decode_conv4(x)
+        x = F.interpolate(x, scale_factor=2, mode='nearest')
+        x = self.decode_conv5(x)
+        x = F.interpolate(x, scale_factor=2, mode='nearest')
+        #x = self.decode_conv6(x)
+
         return x

@@ -38,7 +38,7 @@ def load_depth_estimation_model(checkpoint_path):
     -------
     model: depth estimation model
     """
-    checkpoint = torch.jit.load(checkpoint_path, map_location=device) # load model checkpoint
+    checkpoint = torch.jit.load('results/MobileNetV3SkipAddL-NNConv5R/MobileNetV3SkipAddL-NNConv5R.jit', map_location=device) # load model checkpoint
     #if type(checkpoint) is dict:
    #     model = checkpoint['model']
    #     print("=> loaded best depth estimation model (epoch {})".format(checkpoint['epoch']))
@@ -151,7 +151,7 @@ def run_model(model,source):
 
 parser = argparse.ArgumentParser(description='Depth estimation inference')
 #parser.add_argument('--model', metavar='DATA',help='path to the pretrained model')
-parser.add_argument('--model', default='D:\\depthest\\results\\model.jit',
+parser.add_argument('--model', default='MobileNetV3SkipAddL-NNConv5R',
                       type=str, metavar='PATH',
                       help='path to the pretrained checkpoint (default: '')')
 parser.add_argument('--source', default='webcam', metavar='DATA',help='type of source (webcam, image, video')
