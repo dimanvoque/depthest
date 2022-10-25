@@ -44,12 +44,12 @@ def load_depth_estimation_model(checkpoint_path):
     -------
     model: depth estimation model
     """
-    checkpoint = torch.jit.load('results/MobileNetV3SkipAddL-NNConv5R/MobileNetV3SkipAddL-NNConv5R.jit', map_location=device) # load model checkpoint
-    #if type(checkpoint) is dict:
-   #     model = checkpoint['model']
-   #     print("=> loaded best depth estimation model (epoch {})".format(checkpoint['epoch']))
-   # else:
-    model = checkpoint
+    checkpoint = torch.load(checkpoint_path, map_location=device) # load model checkpoint
+    if type(checkpoint) is dict:
+        model = checkpoint['model']
+        print("=> loaded best depth estimation model (epoch {})".format(checkpoint['epoch']))
+    else:
+        model = checkpoint
 
     return model
 
@@ -157,7 +157,7 @@ def run_model(model,source):
 
 parser = argparse.ArgumentParser(description='Depth estimation inference')
 #parser.add_argument('--model', metavar='DATA',help='path to the pretrained model')
-parser.add_argument('--model', default='D:\\depthest\\results\\MobileNetV3L-NNConv5GU/MobileNetV3L-NNConv5GU.jit',
+parser.add_argument('--model', default='D:\\depthest\\results\\kitti.samples=0.modality=rgb.arch=MobileNetV3SkipAddS_NNConv5R.decoder=nnconv.criterion=l1.lr=0.01.bs=8.pretrained=True/model_best.pth.tar',
                       type=str, metavar='PATH',
                       help='path to the pretrained checkpoint (default: '')')
 parser.add_argument('--source', default='webcam', metavar='DATA',help='type of source (webcam, image, video')
