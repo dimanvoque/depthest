@@ -34,7 +34,7 @@ def parse_command():
                         help='cut-off depth of sparsifier, negative values means infinity (default: inf [m])')
     parser.add_argument('--decoder', '-d', metavar='DECODER', default='nnconv', choices=decoder_names,
                         help='decoder: ' + ' | '.join(decoder_names) + ' (default: nnconv)')
-    parser.add_argument('-j', '--workers', default=2, type=int, metavar='N',
+    parser.add_argument('-j', '--workers', default=3, type=int, metavar='N',
                         help='number of data loading workers (default: 2)')
     parser.add_argument('--epochs', default=15, type=int, metavar='N',
                         help='number of total epochs to run (default: 15)')

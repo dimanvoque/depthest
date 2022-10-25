@@ -1,6 +1,4 @@
-import torch
 import torch.nn as nn
-from torch.autograd import Variable
 
 class MaskedMSELoss(nn.Module):
     def __init__(self):

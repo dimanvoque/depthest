@@ -1,22 +1,19 @@
 from __future__ import division
 import torch
-import math
-import random
 
 from PIL import Image, ImageOps, ImageEnhance
 try:
     import accimage
 except ImportError:
     accimage = None
-import cv2
 import numpy as np
 import numbers
 import types
 import collections
-import warnings
 
 import scipy.ndimage.interpolation as itpl
-import scipy.misc as misc
+
+from PIL import Image
 
 
 def _is_numpy_image(img):
@@ -333,11 +330,14 @@ class Resize(object):
         Returns:
             PIL Image: Rescaled image.
         """
-        if isinstance(self.size, float):
-            return cv2.resize(img, (int(self.size * img.shape[1]), int(self.size * img.shape[0])), cv2.INTER_NEAREST)
-        else:
-            return cv2.resize(img, (self.size[1], self.size[0]), cv2.INTER_NEAREST)
 
+        img = Image.fromarray(img)
+        size = np.array(img.size)
+        # resize the image to half of it's original size
+        new_size = tuple((size * self.size).astype(int))
+        # new resized image
+        resized_image = img.resize(new_size, Image.NEAREST)
+        return np.array(resized_image)
 
 
 class CenterCrop(object):

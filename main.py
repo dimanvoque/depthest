@@ -145,7 +145,7 @@ def main():
         elif args.arch == 'MobileNetV3S_NNConv5GU': # if we don't use skip connections
             model = models.MobileNetV3S_NNConv5GU(output_size=train_loader.dataset.output_size) # MobileNetV3S_NNConv5GU model is created
         else:
-            model = models.MobileNetV3SkipAddL_NNConv5R(output_size=train_loader.dataset.output_size)  # by default we use MobileNetV3SkipAddS_NNConv5R model
+            model = models.MobileNetV3SkipAddS_NNConv5R(output_size=train_loader.dataset.output_size)  # by default we use MobileNetV3SkipAddS_NNConv5R model
         print("=> model created.")
         optimizer = torch.optim.SGD(model.parameters(), args.lr, \
                                     momentum=args.momentum, weight_decay=args.weight_decay) # configure optimizer

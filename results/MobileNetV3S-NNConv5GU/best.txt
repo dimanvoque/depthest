@@ -1,8 +1,8 @@
-epoch=8
-mse=27.379
-rmse=4.838
-absrel=0.083
+epoch=9
+mse=28.744
+rmse=4.929
+absrel=0.084
 lg10=inf
-mae=2.323
-delta1=0.913
-t_gpu=0.0226
+mae=2.366
+delta1=0.909
+t_gpu=19.5391

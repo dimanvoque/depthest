@@ -12,9 +12,6 @@ def h5_loader(path):
     depth = np.array(h5f['depth'])
     return rgb, depth
 
-# def rgb2grayscale(rgb):
-#     return rgb[:,:,0] * 0.2989 + rgb[:,:,1] * 0.587 + rgb[:,:,2] * 0.114
-
 class MyDataloader(data.Dataset):
     modality_names = ['rgb']
 
@@ -93,10 +90,6 @@ class MyDataloader(data.Dataset):
             rgb_np, depth_np = self.transform(rgb, depth)
         else:
             raise(RuntimeError("transform not defined"))
-
-        # color normalization
-        # rgb_tensor = normalize_rgb(rgb_tensor)
-        # rgb_np = normalize_np(rgb_np)
 
         if self.modality == 'rgb':
             input_np = rgb_np

@@ -486,8 +486,8 @@ class MobileNetV3SkipAddL_NNConv5R(nn.Module):
 
     def forward(self, x):
         # skip connections: dec4: enc1
-        # dec 3: enc2 or enc3
-        # dec 2: enc4 or enc6
+        # dec 3: enc3
+        # dec 2: enc6
 
         childs = list(self.mobilenetv3.children())
         self.mobilenetv3 = nn.Sequential(*(childs[i] for i in range(2)))
@@ -522,7 +522,7 @@ class MobileNetV3SkipAddL_NNConv5R(nn.Module):
 class MobileNetV3SkipAddL_NNConv5S(nn.Module):
     def __init__(self, output_size, pretrained=True):
 
-        super(MobileNetV3SkipAdd, self).__init__()
+        super(MobileNetV3SkipAddL_NNConv5S, self).__init__()
         self.output_size = output_size
         self.mobilenetv3 = imagenet.mobilenetv3_large()
         if pretrained:
@@ -607,7 +607,7 @@ class MobileNetV3SkipAddS_NNConv5R(nn.Module):
 
         super(MobileNetV3SkipAddS_NNConv5R, self).__init__()
         self.output_size = output_size
-        self.mobilenetv3 = imagenet.mobilenetv3_large()
+        self.mobilenetv3 = imagenet.mobilenetv3_small()
         if pretrained:
             self.mobilenetv3.load_state_dict(torch.load('imagenet/pretrained/mobilenetv3-small-55df8e1f.pth'))
         else:
@@ -647,9 +647,8 @@ class MobileNetV3SkipAddS_NNConv5R(nn.Module):
         weights_init(self.decode_conv5)
 
     def forward(self, x):
-        # skip connections: dec4: enc1
-        # dec 3: enc3
-        # dec 2: enc6
+        # skip connections: dec3: enc1
+        # dec 2: enc3
 
         childs = list(self.mobilenetv3.children())
         self.mobilenetv3 = nn.Sequential(*(childs[i] for i in range(2)))
@@ -661,23 +660,18 @@ class MobileNetV3SkipAddS_NNConv5R(nn.Module):
             x = layer(x)
             # print("{}: {}".format(i, x.size()))
             if i == 1:
-                x1 = x
-            elif i == 3:
                 x2 = x
-            elif i == 6:
+            elif i == 3:
                 x3 = x
         for i in range(1, 6):
             layer = getattr(self, 'decode_conv{}'.format(i))
             x = layer(x)
             x = F.interpolate(x, scale_factor=2, mode='nearest')
-            if i == 4:
-                x = x + x1
-            elif i == 3:
+            if i == 3:
                 x = x + x2
             elif i == 2:
                 x = x + x3
             # print("{}: {}".format(i, x.size()))
-        x = self.decode_conv6(x)
         return x
 
 class MobileNetV3S_NNConv5GU(nn.Module):
@@ -685,7 +679,7 @@ class MobileNetV3S_NNConv5GU(nn.Module):
 
         super(MobileNetV3S_NNConv5GU, self).__init__()
         self.output_size = output_size
-        self.mobilenetv3 = imagenet.mobilenetv3_large()
+        self.mobilenetv3 = imagenet.mobilenetv3_small()
         if pretrained:
             self.mobilenetv3.load_state_dict(torch.load('imagenet/pretrained/mobilenetv3-small-55df8e1f.pth'))
         else:
@@ -748,6 +742,5 @@ class MobileNetV3S_NNConv5GU(nn.Module):
         x = F.interpolate(x, scale_factor=2, mode='nearest')
         x = self.decode_conv5(x)
         x = F.interpolate(x, scale_factor=2, mode='nearest')
-        #x = self.decode_conv6(x)
 
         return x

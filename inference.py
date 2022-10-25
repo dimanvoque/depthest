@@ -1,3 +1,9 @@
+"""
+Provides a real time inference with the video from webcam by default and depth map on the output
+"""
+
+
+
 import sys
 sys.path.append('D:\\depthest')
 import os
@@ -75,7 +81,7 @@ def img_transform(rgb):
        #transforms.CenterCrop((228, 304)),
        transforms.Resize((224, 224)),
     ])
-    rgb_np = transform(rgb)
+    rgb_np = rgb
     rgb_np = np.asfarray(rgb_np, dtype='float') / 255 # normalization
     return rgb_np
 
@@ -97,7 +103,7 @@ def depth_prediction(model,bgr_img):
     rgb=cv2.cvtColor(bgr_img, cv2.COLOR_BGR2RGB) # RGB to BGR
     #rgb = np.transpose(rgb, (1, 2, 0))
     rgb=img_transform(rgb) # image preprocess
-    to_tensor = transforms.ToTensor() # numpy to tesnor
+    to_tensor = transforms.ToTensor() # numpy to tensor
     input_tensor = to_tensor(rgb)
     while input_tensor.dim() < 3:
          input_tensor = input_tensor.unsqueeze(0)
@@ -151,7 +157,7 @@ def run_model(model,source):
 
 parser = argparse.ArgumentParser(description='Depth estimation inference')
 #parser.add_argument('--model', metavar='DATA',help='path to the pretrained model')
-parser.add_argument('--model', default='MobileNetV3SkipAddL-NNConv5R',
+parser.add_argument('--model', default='D:\\depthest\\results\\MobileNetV3L-NNConv5GU/MobileNetV3L-NNConv5GU.jit',
                       type=str, metavar='PATH',
                       help='path to the pretrained checkpoint (default: '')')
 parser.add_argument('--source', default='webcam', metavar='DATA',help='type of source (webcam, image, video')
