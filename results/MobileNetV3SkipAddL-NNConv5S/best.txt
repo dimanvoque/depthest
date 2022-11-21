@@ -5,4 +5,6 @@ absrel=0.083
 lg10=inf
 mae=2.289
 delta1=0.913
+delta2=0.976
+delta3=0.993
 t_gpu=23.2106

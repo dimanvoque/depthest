@@ -96,7 +96,7 @@ def main():
         assert os.path.isfile(args.evaluate), \
             "=> no model found at '{}'".format(args.evaluate)
         print("=> loading model '{}'".format(args.evaluate))
-        checkpoint = torch.jit.load(args.evaluate, map_location=('cuda:0'))
+        checkpoint = torch.load(args.evaluate, map_location=('cuda:0'))
         if type(checkpoint) is dict:
             args.start_epoch = checkpoint['epoch']
             best_result = checkpoint['best_result']
@@ -200,9 +200,9 @@ def main():
             best_result = result
             with open(best_txt, 'w') as txtfile:
                 txtfile.write(
-                    "epoch={}\nmse={:.3f}\nrmse={:.3f}\nabsrel={:.3f}\nlg10={:.3f}\nmae={:.3f}\ndelta1={:.3f}\nt_gpu={:.4f}\n".
+                    "epoch={}\nmse={:.3f}\nrmse={:.3f}\nabsrel={:.3f}\nlg10={:.3f}\nmae={:.3f}\ndelta1={:.3f}\ndelta2={:.3f}\ndelta3={:.3f}\nt_gpu={:.4f}\n".
                         format(epoch, result.mse, result.rmse, result.absrel, result.lg10, result.mae,
-                               result.delta1,
+                               result.delta1, result.delta2, result.delta3,
                                result.gpu_time))
             if img_merge is not None:
                 img_filename = output_directory + '/comparison_best.png'
@@ -285,6 +285,8 @@ def train(train_loader, model, criterion, optimizer, epoch):
                   'RMSE={result.rmse:.2f}({average.rmse:.2f}) '
                   'MAE={result.mae:.2f}({average.mae:.2f}) '
                   'Delta1={result.delta1:.3f}({average.delta1:.3f}) '
+                  'Delta2={result.delta2:.3f}({average.delta2:.3f}) '
+                  'Delta3={result.delta3:.3f}({average.delta3:.3f}) '
                   'REL={result.absrel:.3f}({average.absrel:.3f}) '
                   'Lg10={result.lg10:.3f}({average.lg10:.3f}) '.format(
                 epoch, i + 1, len(train_loader), data_time=data_time,
@@ -363,6 +365,8 @@ def validate(val_loader, model, epoch, write_to_file=True):
                   'RMSE={result.rmse:.2f}({average.rmse:.2f}) '
                   'MAE={result.mae:.2f}({average.mae:.2f}) '
                   'Delta1={result.delta1:.3f}({average.delta1:.3f}) '
+                  'Delta2={result.delta2:.3f}({average.delta2:.3f}) '
+                  'Delta3={result.delta3:.3f}({average.delta3:.3f}) '
                   'REL={result.absrel:.3f}({average.absrel:.3f}) '
                   'Lg10={result.lg10:.3f}({average.lg10:.3f}) '.format(
                 i + 1, len(val_loader), gpu_time=gpu_time, result=result, average=average_meter.average()))
@@ -373,6 +377,8 @@ def validate(val_loader, model, epoch, write_to_file=True):
           'RMSE={average.rmse:.3f}\n'
           'MAE={average.mae:.3f}\n'
           'Delta1={average.delta1:.3f}\n'
+          'Delta2={average.delta2:.3f}\n'
+          'Delta3={average.delta3:.3f}\n'
           'REL={average.absrel:.3f}\n'
           'Lg10={average.lg10:.3f}\n'
           't_GPU={time:.3f}\n'.format(
