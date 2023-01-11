@@ -2,8 +2,6 @@
 Provides a real time inference with the video from webcam by default and depth map on the output
 """
 
-
-
 import sys
 sys.path.append('D:\\depthest')
 import os

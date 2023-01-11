@@ -1,3 +1,8 @@
+"""
+The learning losses are implemented here
+"""
+
+
 import torch.nn as nn
 
 class MaskedMSELoss(nn.Module):

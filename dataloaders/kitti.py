@@ -1,3 +1,7 @@
+"""
+Configures KITTI dataloader 
+"""
+
 import numpy as np
 import dataloaders.transforms as transforms
 from dataloaders.dataloader import MyDataloader
@@ -9,7 +13,7 @@ class KITTIDataset(MyDataloader):
         super(KITTIDataset, self).__init__(root, type, modality)
         self.output_size = (224, 224)    #as we use mobilenet as encoder
 
-    def train_transform(self, rgb, depth):
+    def train_transform(self, rgb, depth):   #transform for training 
         s = np.random.uniform(1.0, 1.5) # random scaling
         depth_np = depth / s
         angle = np.random.uniform(-5.0, 5.0) # random rotation degrees
@@ -31,7 +35,7 @@ class KITTIDataset(MyDataloader):
 
         return rgb_np, depth_np
 
-    def val_transform(self, rgb, depth):
+    def val_transform(self, rgb, depth):   #transform for validation
         depth_np = depth
         transform = transforms.Compose([
             transforms.Crop(130, 10, 240, 1200),

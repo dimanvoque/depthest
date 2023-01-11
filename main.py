@@ -1,3 +1,7 @@
+"""
+Configures training pipeline
+"""
+
 import os
 import time
 import csv
@@ -15,7 +19,7 @@ cudnn.benchmark = True
 from metrics import AverageMeter, Result
 import utils
 
-args = utils.parse_command()
+args = utils.parse_command()   #arguments for training or evaluation
 print(args)
 
 if config.GPU == True:
@@ -23,7 +27,7 @@ if config.GPU == True:
 else:
     os.environ["CUDA_VISIBLE_DEVICES"] = ""  # Set the CPU
 fieldnames = ['rmse', 'mae', 'delta1', 'absrel',
-              'lg10', 'mse', 'delta2', 'delta3', 'data_time', 'gpu_time']
+              'lg10', 'mse', 'delta2', 'delta3', 'data_time', 'gpu_time']   #defines used metrics
 best_fieldnames = ['best_epoch'] + fieldnames
 best_result = Result()
 best_result.set_to_worst()

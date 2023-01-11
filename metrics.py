@@ -1,3 +1,7 @@
+"""
+Define metrics used in training and evaluation
+"""
+
 import torch
 import math
 import numpy as np

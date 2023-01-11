@@ -33,6 +33,10 @@ def _make_divisible(v, divisor, min_value=None):
     return new_v
 
 
+"""
+Define all the necessary layers
+"""
+
 class h_sigmoid(nn.Module):
     def __init__(self, inplace=True):
         super(h_sigmoid, self).__init__()
@@ -127,6 +131,9 @@ class InvertedResidual(nn.Module):
         else:
             return self.conv(x)
 
+"""
+Define the class for MobileNetV3
+"""
 
 class MobileNetV3(nn.Module):
     def __init__(self, cfgs, mode, num_classes=1000, width_mult=1.):
@@ -230,6 +237,9 @@ def mobilenetv3_small(**kwargs):
     return MobileNetV3(cfgs, mode='small', **kwargs)
 
 def main():
+    """
+    Loads pretrained models
+    """
     net_large = mobilenetv3_large()
     net_small = mobilenetv3_small()
 

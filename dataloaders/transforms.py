@@ -1,3 +1,7 @@
+"""
+Performs the data augmentation and transformation
+"""
+
 from __future__ import division
 import torch
 

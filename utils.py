@@ -1,3 +1,7 @@
+"""
+Define the parser for arguments used in training and evaluation 
+"""
+
 import os
 import torch
 import shutil

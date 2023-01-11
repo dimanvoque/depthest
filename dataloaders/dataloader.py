@@ -1,3 +1,7 @@
+"""
+Configures the dataloader
+"""
+
 import os
 import os.path
 import numpy as np
@@ -5,17 +9,17 @@ import torch.utils.data as data
 import h5py
 import dataloaders.transforms as transforms
 
-def h5_loader(path):
+def h5_loader(path):             #parses the HDF5 image format into numpy array 
     h5f = h5py.File(path, "r")
     rgb = np.array(h5f['rgb'])
     rgb = np.transpose(rgb, (1, 2, 0))
     depth = np.array(h5f['depth'])
     return rgb, depth
 
-class MyDataloader(data.Dataset):
+class MyDataloader(data.Dataset):  #define the class of the dataloader
     modality_names = ['rgb']
 
-    def is_image_file(self, filename):
+    def is_image_file(self, filename):   #check whether the image extension is right 
         IMG_EXTENSIONS = ['.h5']
         return any(filename.endswith(extension) for extension in IMG_EXTENSIONS)
 
