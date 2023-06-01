@@ -1,7 +1,3 @@
-"""
-Configures training pipeline
-"""
-
 import os
 import time
 import csv
@@ -18,16 +14,19 @@ import config
 cudnn.benchmark = True
 from metrics import AverageMeter, Result
 import utils
+import torch.onnx
 
-args = utils.parse_command()   #arguments for training or evaluation
+from thop import profile
+
+args = utils.parse_command()
 print(args)
 
 if config.GPU == True:
     os.environ["CUDA_VISIBLE_DEVICES"] = '0'  # Set the GPU.
 else:
     os.environ["CUDA_VISIBLE_DEVICES"] = ""  # Set the CPU
-fieldnames = ['rmse', 'mae', 'delta1', 'absrel',
-              'lg10', 'mse', 'delta2', 'delta3', 'data_time', 'gpu_time']   #defines used metrics
+fieldnames = ['test', 'rmse', 'mae', 'delta1', 'absrel',
+              'lg10', 'mse', 'delta2', 'delta3', 'data_time', 'gpu_time']
 best_fieldnames = ['best_epoch'] + fieldnames
 best_result = Result()
 best_result.set_to_worst()
@@ -74,6 +73,10 @@ def create_data_loaders(args):
     # set batch size to be 1 for validation
     val_loader = torch.utils.data.DataLoader(val_dataset,
                                              batch_size=1, shuffle=False, num_workers=args.workers, pin_memory=True)
+    val_filenames = val_dataset.val_filenames()
+    #print(val_filenames)
+
+
 
 
     # put construction of train loader here, for those who are interested in testing only
@@ -86,14 +89,15 @@ def create_data_loaders(args):
 
     print("=> data loaders created...")
 
-    return train_loader, val_loader
+    return train_loader, val_loader, val_filenames
 
 
 
 def main():
-    global args, best_result, output_directory, train_csv, test_csv
+    global args, best_result, output_directory, train_csv, test_csv, test_high_csv, test_medium_csv, test_low_csv
     print(args)
     start = 0
+
 
     # evaluation mode
     if args.evaluate:
@@ -109,9 +113,11 @@ def main():
         else:
             model = checkpoint
             args.start_epoch = 0
+        total_params = sum(p.numel() for p in model.parameters())
+        print("Total number of parameters in the model - " + str(total_params))
         output_directory = os.path.dirname(args.evaluate)
-        _, val_loader = create_data_loaders(args)
-        validate(val_loader, model, args.start_epoch, write_to_file=False)
+        _, val_loader, val_filenames = create_data_loaders(args)
+        validate(val_loader, model, args.start_epoch, val_filenames, write_to_file=False)
 
         return
 
@@ -130,14 +136,14 @@ def main():
         optimizer = checkpoint['optimizer'] # load optimizer
         output_directory = os.path.dirname(os.path.abspath(chkpt_path))
         print("=> loaded checkpoint (epoch {})".format(checkpoint['epoch']))
-        train_loader, val_loader = create_data_loaders(args) # create data loader
+        train_loader, val_loader, val_filenames = create_data_loaders(args) # create data loader
         args.resume = True
 
 
 
     # create new model if checkpoint does not exist
     else:
-        train_loader, val_loader = create_data_loaders(args) # load train and validation data
+        train_loader, val_loader, val_filenames = create_data_loaders(args) # load train and validation data
         print("=> creating Model ({}-{}) ...".format(args.arch, args.decoder))
         in_channels = len(args.modality)
         if args.arch == 'MobileNetV3SkipAddL_NNConv5R': # if we use skip-add connections
@@ -146,7 +152,7 @@ def main():
             model = models.MobileNetV3SkipAddL_NNConv5S(output_size=train_loader.dataset.output_size) # MobileNetV3SkipAddL_NNConv5S model is created
         elif args.arch == 'MobileNetV3L_NNConv5GU': # if we don't use skip connections
             model = models.MobileNetV3L_NNConv5GU(output_size=train_loader.dataset.output_size) # MobileNetV3L_NNConv5GU model is created
-        elif args.arch == 'MobileNetV3S_NNConv5GU': # if we don't use skip connections
+        elif args.arch == 'MobileNetV3S_NNCon5GU': # if we don't use skip connections
             model = models.MobileNetV3S_NNConv5GU(output_size=train_loader.dataset.output_size) # MobileNetV3S_NNConv5GU model is created
         else:
             model = models.MobileNetV3SkipAddS_NNConv5R(output_size=train_loader.dataset.output_size)  # by default we use MobileNetV3SkipAddS_NNConv5R model
@@ -181,6 +187,9 @@ def main():
         os.makedirs(output_directory)
     train_csv = os.path.join(output_directory, 'train.csv')  # store training result
     test_csv = os.path.join(output_directory, 'test.csv')  # store test result
+    test_high_csv = os.path.join(output_directory, 'test_high.csv') # store test result of each high-quality sample for AL
+    test_medium_csv = os.path.join(output_directory, 'test_medium.csv')  # store test result of each medium-quality sample for AL
+    test_low_csv = os.path.join(output_directory, 'test_low.csv')  # store test result of each sample for AL
     best_txt = os.path.join(output_directory, 'best.txt')  # store best result
 
     # create new csv files with only header
@@ -191,12 +200,21 @@ def main():
         with open(test_csv, 'w') as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
+        with open(test_high_csv, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+        with open(test_medium_csv, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+        with open(test_low_csv, 'w') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
 
     # training is started from here
     for epoch in range(start, args.epochs):
         utils.adjust_learning_rate(optimizer, epoch, args.lr)
         train(train_loader, model, criterion, optimizer, epoch)  # train for one epoch
-        result, img_merge = validate(val_loader, model, epoch)  # evaluate on validation set
+        result, img_merge = validate(val_loader, model, epoch, val_filenames)  # evaluate on validation set
 
         # remember best rmse and save checkpoint
         is_best = result.rmse < best_result.rmse # compare result of the current epoch and best result
@@ -206,7 +224,9 @@ def main():
                 txtfile.write(
                     "epoch={}\nmse={:.3f}\nrmse={:.3f}\nabsrel={:.3f}\nlg10={:.3f}\nmae={:.3f}\ndelta1={:.3f}\ndelta2={:.3f}\ndelta3={:.3f}\nt_gpu={:.4f}\n".
                         format(epoch, result.mse, result.rmse, result.absrel, result.lg10, result.mae,
-                               result.delta1, result.delta2, result.delta3,
+                               result.delta1,
+                               result.delta2,
+                               result.delta3,
                                result.gpu_time))
             if img_merge is not None:
                 img_filename = output_directory + '/comparison_best.png'
@@ -296,6 +316,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
                 epoch, i + 1, len(train_loader), data_time=data_time,
                 gpu_time=gpu_time, result=result, average=average_meter.average()))
 
+
     avg = average_meter.average()
     with open(train_csv, 'a') as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -305,7 +326,7 @@ def train(train_loader, model, criterion, optimizer, epoch):
 
 
 
-def validate(val_loader, model, epoch, write_to_file=True):
+def validate(val_loader, model, epoch, val_filenames, write_to_file=True):
     """
     This function is used for validation purposes
     Parameters
@@ -324,6 +345,7 @@ def validate(val_loader, model, epoch, write_to_file=True):
     average_meter = AverageMeter()
     model.eval()  # switch to evaluate mode
     end = time.time()
+
     for i, (input, target) in enumerate(val_loader):
         if config.GPU == True:
             input, target = input.cuda(), target.cuda()
@@ -334,8 +356,13 @@ def validate(val_loader, model, epoch, write_to_file=True):
         # compute output
         start.record()
         with torch.no_grad():
+            macs, params = profile(model, inputs=(input,))
+            print("Total number of MACs in the model - " + str(macs))
             pred = model(input)
         end.record()
+        if i == 1:
+            compiled_model_name = os.path.join(output_directory, 'compiled_model.onnx')
+            torch.onnx.export(model, input, compiled_model_name, export_params=True, opset_version=11, do_constant_folding=True)
         torch.cuda.synchronize()
         gpu_time = start.elapsed_time(end)
 
@@ -374,6 +401,26 @@ def validate(val_loader, model, epoch, write_to_file=True):
                   'REL={result.absrel:.3f}({average.absrel:.3f}) '
                   'Lg10={result.lg10:.3f}({average.lg10:.3f}) '.format(
                 i + 1, len(val_loader), gpu_time=gpu_time, result=result, average=average_meter.average()))
+
+            if write_to_file:
+                if result.delta1 >= 0.8 and result.delta1 <= 0.9:
+                    with open(test_high_csv, 'a') as csvfile:
+                        writer = csv.DictWriter(csvfile, dialect="excel", fieldnames=fieldnames)
+                        writer.writerow({'test': val_filenames[i],'mse': result.mse, 'rmse': result.rmse, 'absrel': result.absrel, 'lg10': result.lg10,
+                                         'mae': result.mae, 'delta1': result.delta1, 'delta2': result.delta2, 'delta3': result.delta3,
+                                         'data_time': result.data_time, 'gpu_time': result.gpu_time})
+                elif result.delta1 < 0.8 and result.delta1 >= 0.5:
+                    with open(test_medium_csv, 'a') as csvfile:
+                        writer = csv.DictWriter(csvfile, dialect="excel", fieldnames=fieldnames)
+                        writer.writerow({'test': val_filenames[i],'mse': result.mse, 'rmse': result.rmse, 'absrel': result.absrel, 'lg10': result.lg10,
+                                         'mae': result.mae, 'delta1': result.delta1, 'delta2': result.delta2, 'delta3': result.delta3,
+                                         'data_time': result.data_time, 'gpu_time': result.gpu_time})
+                elif result.delta1 < 0.5:
+                    with open(test_low_csv, 'a') as csvfile:
+                        writer = csv.DictWriter(csvfile, dialect="excel", fieldnames=fieldnames)
+                        writer.writerow({'test': val_filenames[i],'mse': result.mse, 'rmse': result.rmse, 'absrel': result.absrel, 'lg10': result.lg10,
+                                         'mae': result.mae, 'delta1': result.delta1, 'delta2': result.delta2, 'delta3': result.delta3,
+                                         'data_time': result.data_time, 'gpu_time': result.gpu_time})
 
     avg = average_meter.average()
 

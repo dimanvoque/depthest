@@ -1,7 +1,3 @@
-"""
-Configures all the 5 models' architectures 
-"""
-
 import os
 import torch
 import torch.nn as nn
@@ -10,12 +6,6 @@ import collections
 import math
 import torch.nn.functional as F
 import imagenet.mobilenetv3 as imagenet
-
-
-
-"""
-Constructs necessary layers 
-"""
 
 class Identity(nn.Module):
     # a dummy identity module
@@ -371,20 +361,16 @@ def choose_decoder(decoder):
     return model
 
 
-class MobileNetV3L_NNConv5GU(nn.Module):   #defines MobileNetV3L-NNConv5GU architecture
+class MobileNetV3L_NNConv5GU(nn.Module):
     def __init__(self, output_size, in_channels=3, pretrained=True):
 
         super(MobileNetV3L_NNConv5GU, self).__init__()
         self.output_size = output_size
-        self.mobilenetv3 = imagenet.mobilenetv3_large()   #gets the large encoder
-        if pretrained:   #if we need pretrained encoder downloads it
+        self.mobilenetv3 = imagenet.mobilenetv3_large()
+        if pretrained:
             self.mobilenetv3.load_state_dict(torch.load('imagenet/pretrained/mobilenetv3-large-1cd25616.pth'))
-        else:  #if we don't need pretrained encoder initialize the weights
+        else:
             self.mobilenetv3.apply(weights_init)
-
-        """
-        Cut last layers built for classification 
-        """
 
         childs = list(self.mobilenetv3.children())
 
@@ -401,12 +387,8 @@ class MobileNetV3L_NNConv5GU(nn.Module):   #defines MobileNetV3L-NNConv5GU archi
             self.mobilenetv3 = nn.Sequential(
                 conv_bn(in_channels,  32, 2),
                 *(childs[i] for i in range(2)))
-
-        """
-        Define decoder 
-        """
         
-        kernel_size = 5   #define the size of decoder's kernel size 
+        kernel_size = 5
         # self.decode_conv1 = conv(960, 480, kernel_size)
         # self.decode_conv2 = conv(480, 240, kernel_size)
         # self.decode_conv3 = conv(240, 120, kernel_size)
@@ -428,10 +410,6 @@ class MobileNetV3L_NNConv5GU(nn.Module):   #defines MobileNetV3L-NNConv5GU archi
             depthwise(60, kernel_size),
             pointwise(60, 30))
         self.decode_conv6 = pointwise(30, 1)
-
-        """
-        Initialize the weights of decoder
-        """
         
         weights_init(self.decode_conv1)
         weights_init(self.decode_conv2)
@@ -457,20 +435,16 @@ class MobileNetV3L_NNConv5GU(nn.Module):   #defines MobileNetV3L-NNConv5GU archi
         return x
 
 
-class MobileNetV3SkipAddL_NNConv5R(nn.Module):   #defines MobileNetV3SkipAddL-NNConv5R architecture
+class MobileNetV3SkipAddL_NNConv5R(nn.Module):
     def __init__(self, output_size, pretrained=True):
 
         super(MobileNetV3SkipAddL_NNConv5R, self).__init__()
         self.output_size = output_size
-        self.mobilenetv3 = imagenet.mobilenetv3_large()   #gets the large encoder
-        if pretrained:   #if we need pretrained encoder downloads it
+        self.mobilenetv3 = imagenet.mobilenetv3_large()
+        if pretrained:
             self.mobilenetv3.load_state_dict(torch.load('imagenet/pretrained/mobilenetv3-large-1cd25616.pth'))
-        else:   #if we don't need pretrained encoder initialize the weights
+        else:
             self.mobilenetv3.apply(weights_init)
-
-        """
-        Cut last layers built for classification 
-        """
 
         childs = list(self.mobilenetv3.children())
         self.mobilenetv3 = nn.Sequential(*(childs[i] for i in range(2)))
@@ -479,10 +453,6 @@ class MobileNetV3SkipAddL_NNConv5R(nn.Module):   #defines MobileNetV3SkipAddL-NN
 
         for i in range (len(childs12)):
             setattr( self, 'conv{}'.format(i), childs12[i])
-
-        """
-        Define decoder 
-        """
 
         kernel_size = 5
         # self.decode_conv1 = conv(960, 80, kernel_size)
@@ -506,10 +476,6 @@ class MobileNetV3SkipAddL_NNConv5R(nn.Module):   #defines MobileNetV3SkipAddL-NN
             depthwise(16, kernel_size),
             pointwise(16, 3))
         self.decode_conv6 = pointwise(3, 1)
-
-        """
-        Initialize the weights of decoder
-        """
         
         weights_init(self.decode_conv1)
         weights_init(self.decode_conv2)
@@ -527,10 +493,7 @@ class MobileNetV3SkipAddL_NNConv5R(nn.Module):   #defines MobileNetV3SkipAddL-NN
         self.mobilenetv3 = nn.Sequential(*(childs[i] for i in range(2)))
 
         childs12 = torch.nn.Sequential(*childs[0], *childs[1])
-
-        """
-        Build skip-connections and forward propagation 
-        """
+        
 
         for i in range (len(childs12)):
             layer = getattr(self, 'conv{}'.format(i))
@@ -556,20 +519,16 @@ class MobileNetV3SkipAddL_NNConv5R(nn.Module):   #defines MobileNetV3SkipAddL-NN
         x = self.decode_conv6(x)
         return x
 
-class MobileNetV3SkipAddL_NNConv5S(nn.Module):   #defines MobileNetV3SkipAddL-NNConv5S architecture
+class MobileNetV3SkipAddL_NNConv5S(nn.Module):
     def __init__(self, output_size, pretrained=True):
 
         super(MobileNetV3SkipAddL_NNConv5S, self).__init__()
         self.output_size = output_size
-        self.mobilenetv3 = imagenet.mobilenetv3_large()   #gets the large encoder
-        if pretrained:   #if we need pretrained encoder downloads it
+        self.mobilenetv3 = imagenet.mobilenetv3_large()
+        if pretrained:
             self.mobilenetv3.load_state_dict(torch.load('imagenet/pretrained/mobilenetv3-large-1cd25616.pth'))
-        else:   #if we don't need pretrained encoder initialize the weights
+        else:
             self.mobilenetv3.apply(weights_init)
-
-        """
-        Cut last layers built for classification 
-        """
 
         childs = list(self.mobilenetv3.children())
         self.mobilenetv3 = nn.Sequential(*(childs[i] for i in range(2)))
@@ -578,10 +537,6 @@ class MobileNetV3SkipAddL_NNConv5S(nn.Module):   #defines MobileNetV3SkipAddL-NN
 
         for i in range (len(childs12)):
             setattr( self, 'conv{}'.format(i), childs12[i])
-
-        """
-        Define decoder 
-        """
 
         kernel_size = 5
         # self.decode_conv1 = conv(960, 80, kernel_size)
@@ -604,10 +559,6 @@ class MobileNetV3SkipAddL_NNConv5S(nn.Module):   #defines MobileNetV3SkipAddL-NN
         self.decode_conv5 = nn.Sequential(
             depthwise(16, kernel_size),
             pointwise(16, 1))
-
-        """
-        Initialize the weights of decoder
-        """
         
         weights_init(self.decode_conv1)
         weights_init(self.decode_conv2)
@@ -624,10 +575,7 @@ class MobileNetV3SkipAddL_NNConv5S(nn.Module):   #defines MobileNetV3SkipAddL-NN
         self.mobilenetv3 = nn.Sequential(*(childs[i] for i in range(2)))
 
         childs12 = torch.nn.Sequential(*childs[0], *childs[1])
-
-        """
-        Build skip-connections and forward propagation 
-        """
+        
 
         for i in range (len(childs12)):
             layer = getattr(self, 'conv{}'.format(i))
@@ -659,15 +607,11 @@ class MobileNetV3SkipAddS_NNConv5R(nn.Module):
 
         super(MobileNetV3SkipAddS_NNConv5R, self).__init__()
         self.output_size = output_size
-        self.mobilenetv3 = imagenet.mobilenetv3_small()   #gets the small encoder
-        if pretrained:   #if we need pretrained encoder downloads it
+        self.mobilenetv3 = imagenet.mobilenetv3_small()
+        if pretrained:
             self.mobilenetv3.load_state_dict(torch.load('imagenet/pretrained/mobilenetv3-small-55df8e1f.pth'))
-        else:   #if we don't need pretrained encoder initialize the weights
+        else:
             self.mobilenetv3.apply(weights_init)
-
-        """
-        Cut last layers built for classification 
-        """
 
         childs = list(self.mobilenetv3.children())
         self.mobilenetv3 = nn.Sequential(*(childs[i] for i in range(2)))
@@ -675,10 +619,6 @@ class MobileNetV3SkipAddS_NNConv5R(nn.Module):
 
         for i in range(len(childs12)):
             setattr(self, 'conv{}'.format(i), childs12[i])
-
-        """
-        Define decoder 
-        """
 
         kernel_size = 5
         # self.decode_conv1 = conv(576, 40, kernel_size)
@@ -700,10 +640,6 @@ class MobileNetV3SkipAddS_NNConv5R(nn.Module):
             pointwise(16, 3))
         self.decode_conv5 = pointwise(3, 1)
 
-        """
-        Initialize the weights of decoder
-        """
-
         weights_init(self.decode_conv1)
         weights_init(self.decode_conv2)
         weights_init(self.decode_conv3)
@@ -718,10 +654,6 @@ class MobileNetV3SkipAddS_NNConv5R(nn.Module):
         self.mobilenetv3 = nn.Sequential(*(childs[i] for i in range(2)))
 
         childs12 = torch.nn.Sequential(*childs[0], *childs[1])
-
-        """
-        Build skip-connections and forward propagation 
-        """
 
         for i in range(len(childs12)):
             layer = getattr(self, 'conv{}'.format(i))
@@ -742,20 +674,16 @@ class MobileNetV3SkipAddS_NNConv5R(nn.Module):
             # print("{}: {}".format(i, x.size()))
         return x
 
-class MobileNetV3S_NNConv5GU(nn.Module):   #defines MobileNetV3S-NNConv5GU architecture
+class MobileNetV3S_NNConv5GU(nn.Module):
     def __init__(self, output_size, in_channels=3, pretrained=True):
 
         super(MobileNetV3S_NNConv5GU, self).__init__()
         self.output_size = output_size
-        self.mobilenetv3 = imagenet.mobilenetv3_small()   #gets the small encoder
-        if pretrained:   #if we need pretrained encoder downloads it
+        self.mobilenetv3 = imagenet.mobilenetv3_small()
+        if pretrained:
             self.mobilenetv3.load_state_dict(torch.load('imagenet/pretrained/mobilenetv3-small-55df8e1f.pth'))
-        else:   #if we don't need pretrained encoder initialize the weights
+        else:
             self.mobilenetv3.apply(weights_init)
-
-        """
-        Cut last layers built for classification 
-        """
 
         childs = list(self.mobilenetv3.children())
 
@@ -772,10 +700,6 @@ class MobileNetV3S_NNConv5GU(nn.Module):   #defines MobileNetV3S-NNConv5GU archi
             self.mobilenetv3 = nn.Sequential(
                 conv_bn(in_channels,  32, 2),
                 *(childs[i] for i in range(2)))
-
-        """
-        Define decoder 
-        """
         
         kernel_size = 5
         # self.decode_conv1 = conv(576, 288, kernel_size)
@@ -799,10 +723,6 @@ class MobileNetV3S_NNConv5GU(nn.Module):   #defines MobileNetV3S-NNConv5GU archi
         self.decode_conv5 = nn.Sequential(
             depthwise(36, kernel_size),
             pointwise(36, 1))
-
-        """
-        Initialize the weights of decoder
-        """
 
         weights_init(self.decode_conv1)
         weights_init(self.decode_conv2)

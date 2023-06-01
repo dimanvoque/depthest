@@ -1,7 +1,3 @@
-"""
-Define metrics used in training and evaluation
-"""
-
 import torch
 import math
 import numpy as np
@@ -15,7 +11,7 @@ class Result(object):
         self.irmse, self.imae = 0, 0
         self.mse, self.rmse, self.mae = 0, 0, 0
         self.absrel, self.lg10 = 0, 0
-        self.delta1, self.delta2, self.delta3 = 0, 0, 0
+        self.delta1, self.delta2, self.deltppipa3 = 0, 0, 0
         self.data_time, self.gpu_time = 0, 0
 
     def set_to_worst(self):

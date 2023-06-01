@@ -1,7 +1,3 @@
-"""
-Define the parser for arguments used in training and evaluation 
-"""
-
 import os
 import torch
 import shutil
@@ -13,7 +9,7 @@ from models import Decoder
 from dataloaders.dataloader import MyDataloader
 import argparse
 
-cmap = plt.cm.viridis
+cmap = plt.cm.magma
 
 
 def parse_command():
@@ -51,11 +47,11 @@ def parse_command():
                         help='momentum')
     parser.add_argument('--weight-decay', '--wd', default=1e-4, type=float,
                         metavar='W', help='weight decay (default: 1e-4)')
-    parser.add_argument('--print-freq', '-p', default=10, type=int,
+    parser.add_argument('--print-freq', '-p', default=1, type=int,
                         metavar='N', help='print frequency (default: 50)')
     parser.add_argument('--resume', default='',
                         type=str, metavar='PATH',
-                        help='path to latest checkpoint (default: results/kitti.samples=0.modality=rgb.arch=MobileNetV3SkipAdd.decoder=nnconv.criterion=l1.lr=0.01.bs=8.pretrained=True/ch.peckpoint-4.pth.tar)')
+                        help='path to latest checkpoint (default: )')
     parser.add_argument('-e', '--evaluate', dest = 'evaluate', type = str, default='')
     parser.add_argument('-t', '--train', default='', type=str)
     parser.add_argument('-pt', '--no-pretrain', dest='pretrained', action='store_false',
@@ -80,6 +76,7 @@ def colored_depthmap(depth, d_min=None, d_max=None):
     if d_max is None:
         d_max = np.max(depth)
     depth_relative = (depth - d_min) / (d_max - d_min)
+
     return 255 * cmap(depth_relative)[:,:,:3] # H, W, C
 
 
@@ -120,6 +117,7 @@ def add_row(img_merge, row):
 
 def save_image(img_merge, filename):
     img_merge = Image.fromarray(img_merge.astype('uint8'))
+
     img_merge.save(filename)
 
 def save_checkpoint(state, is_best, epoch, output_directory):

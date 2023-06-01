@@ -13,7 +13,7 @@ import torch.optim
 import cv2
 from PIL import Image
 import matplotlib.pyplot as plt
-cmap = plt.cm.viridis
+cmap = plt.cm.plasma
 import time
 
 from dataloaders import transforms
@@ -137,7 +137,7 @@ def run_model(model,source):
             totalTime = end - start
             fps = 1 / totalTime
             opencv_image = cv2.cvtColor(np.array(color_depth), cv2.COLOR_RGB2BGR)
-            opencv_image = cv2.applyColorMap(opencv_image, cv2.COLORMAP_RAINBOW)
+            opencv_image = cv2.applyColorMap(opencv_image, cv2.COLORMAP_PLASMA)
             #cv2.putText(image, f'inf_time: {int(totalTime)}', (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 2)
             #cv2.putText(opencv_image, f'FPS: {int(fps)}', (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 2)
             cv2.putText(image, f'FPS: {int(fps)}', (20, 70), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0, 255, 0), 2)
@@ -155,7 +155,7 @@ def run_model(model,source):
 
 parser = argparse.ArgumentParser(description='Depth estimation inference')
 #parser.add_argument('--model', metavar='DATA',help='path to the pretrained model')
-parser.add_argument('--model', default='D:\\depthest\\results\\kitti.samples=0.modality=rgb.arch=MobileNetV3SkipAddS_NNConv5R.decoder=nnconv.criterion=l1.lr=0.01.bs=8.pretrained=True/model_best.pth.tar',
+parser.add_argument('--model', default='results/MobileDepth_Small_1/MobileDepth_Small_1.pth.tar',
                       type=str, metavar='PATH',
                       help='path to the pretrained checkpoint (default: '')')
 parser.add_argument('--source', default='webcam', metavar='DATA',help='type of source (webcam, image, video')
